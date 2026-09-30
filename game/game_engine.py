@@ -1,5 +1,6 @@
 import pygame
 import random
+from pathlib import Path
 from .target import Target
 
 # Game Engine
@@ -21,7 +22,17 @@ class GameEngine:
         self.hud_height = 60
         self.round_seconds = 30
         self.font = pygame.font.SysFont("Arial", 26)
+        self.hit_sound = self._load_sound("hit.wav")
+        self.miss_sound = self._load_sound("miss.wav")
+        self.game_over_sound = self._load_sound("game_over.wav")
         self.reset_round("Medium")
+
+    def _load_sound(self, filename):
+        sound_path = Path(__file__).resolve().parent.parent / "assets" / filename
+        try:
+            return pygame.mixer.Sound(str(sound_path))
+        except (pygame.error, OSError):
+            return None
 
     def reset_round(self, difficulty):
         self.difficulty = difficulty
@@ -58,9 +69,13 @@ class GameEngine:
         if self.target.contains_point(x, y):
             self.hits += 1
             self.score += 1
+            if self.hit_sound is not None:
+                self.hit_sound.play()
             self.target = self._spawn_target()
         else:
             self.misses += 1
+            if self.miss_sound is not None:
+                self.miss_sound.play()
 
     def handle_input(self):
         # Reserved for continuously-held-key input; this game is
@@ -74,11 +89,15 @@ class GameEngine:
         self.time_left_frames -= 1
         if self.time_left_frames <= 0:
             self.game_over = True
+            if self.game_over_sound is not None:
+                self.game_over_sound.play()
             return
 
         self.target.update()
         if self.target.expired():
             self.misses += 1  # letting a target time out counts as a miss too
+            if self.miss_sound is not None:
+                self.miss_sound.play()
             self.target = self._spawn_target()
 
     def accuracy(self):

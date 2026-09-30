@@ -3,6 +3,11 @@ from game.game_engine import GameEngine
 
 # Initialize pygame/Start application
 pygame.init()
+try:
+    if pygame.mixer.get_init() is None:
+        pygame.mixer.init()
+except pygame.error:
+    pass
 
 # Screen dimensions
 WIDTH, HEIGHT = 700, 500
